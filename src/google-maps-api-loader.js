@@ -5,7 +5,7 @@ var urlBuilder = require('../lib/url-builder.js');
 
 var googleApi;
 
-function loadAutoCompleteAPI(params) {
+function loadAutoCompleteAPI (params, reject) {
   var script = document.createElement('script');
 
   script.type = 'text/javascript';
@@ -20,6 +20,10 @@ function loadAutoCompleteAPI(params) {
     version: params.version
   });
 
+  script.onerror = () => {
+    reject(new Error('Failed to load google maps script!'))
+  }
+
   document.querySelector('head').appendChild(script);
 }
 
@@ -31,24 +35,19 @@ function loadAutoCompleteAPI(params) {
  *
  * @return {promise}
  */
-function googleMapsApiLoader(params) {
+function googleMapsApiLoader (params) {
   if (googleApi) {
     return Promise.resolve(googleApi);
   }
 
-  return new Promise(function(resolve, reject) {
-    loadAutoCompleteAPI(params);
+  return new Promise(function (resolve, reject) {
+    loadAutoCompleteAPI(params, (err) => reject(err));
 
-    window.googleMapsAutoCompleteAPILoad = function() {
+    window.googleMapsAutoCompleteAPILoad = function () {
       googleApi = window.google;
       resolve(googleApi);
     };
 
-    setTimeout(function() {
-      if (!window.google) {
-        reject(new Error('Loading took too long'));
-      }
-    }, 5000);
   });
 }
 
